@@ -11,6 +11,12 @@
 #define ANIMATION_DURATION 500
 #define ANIMATION_DELAY    600
 
+#define KEY_COLOR_RED 0
+#define KEY_COLOR_GREEN 1
+#define KEY_COLOR_BLUE 2
+#define KEY_SHOW_CUSTOM_COLOR 3
+#define KEY_SHOW_HOUR_MARKERS 4
+
 typedef struct {
     int hours;
     int minutes;
@@ -26,6 +32,8 @@ static Time s_last_time, s_anim_time;
 static int s_radius = 0, s_anim_hours_60 = 0, s_color_channels[3];
 static bool s_animating = false;
 static char s_num_buffer[4];
+
+static bool s_show_hour_markers = false;
 
 /*************************** AnimationImplementation **************************/
 
@@ -135,29 +143,31 @@ static void update_proc(Layer *layer, GContext *ctx) {
         graphics_draw_line(ctx, s_center, hour_hand);
     }
     
-    //Hour markers    
-    graphics_context_set_stroke_color(ctx, GColorWhite);
-    graphics_context_set_stroke_width(ctx, STROKE_WIDTH_SLIM);
-    
-    for(int h=0; h<12; h++) {
-        if(h != 0 && h != 6) {
-            float hour_marker_angle = TRIG_MAX_ANGLE * h / 12;
-            
-            //APP_LOG(APP_LOG_LEVEL_DEBUG, "Width: %d", (window_bounds.size.w / 2) + 40);
-            
-            GPoint start_hour_marker = (GPoint) {
-                .x = (int16_t)( sin_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 2) / TRIG_MAX_RATIO) + s_center.x,
-                .y = (int16_t)(-cos_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 2) / TRIG_MAX_RATIO) + s_center.y,
-            }; 
-            
-            GPoint end_hour_marker = (GPoint) {
-                .x = (int16_t)( sin_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 7) / TRIG_MAX_RATIO) + s_center.x,
-                .y = (int16_t)(-cos_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 7) / TRIG_MAX_RATIO) + s_center.y,
-            }; 
-            
-            graphics_draw_line(ctx, start_hour_marker, end_hour_marker);
-        }
-    }
+    //Hour markers 
+    if(s_show_hour_markers) {
+		graphics_context_set_stroke_color(ctx, GColorWhite);
+		graphics_context_set_stroke_width(ctx, STROKE_WIDTH_SLIM);
+		
+		for(int h=0; h<12; h++) {
+			if(h != 0 && h != 6) {
+				float hour_marker_angle = TRIG_MAX_ANGLE * h / 12;
+				
+				//APP_LOG(APP_LOG_LEVEL_DEBUG, "Width: %d", (window_bounds.size.w / 2) + 40);
+				
+				GPoint start_hour_marker = (GPoint) {
+					.x = (int16_t)( sin_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 2) / TRIG_MAX_RATIO) + s_center.x,
+					.y = (int16_t)(-cos_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 2) / TRIG_MAX_RATIO) + s_center.y,
+				}; 
+				
+				GPoint end_hour_marker = (GPoint) {
+					.x = (int16_t)( sin_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 7) / TRIG_MAX_RATIO) + s_center.x,
+					.y = (int16_t)(-cos_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 7) / TRIG_MAX_RATIO) + s_center.y,
+				}; 
+				
+				graphics_draw_line(ctx, start_hour_marker, end_hour_marker);
+			}
+		}
+	}
 }
 
 static void date_update_proc(Layer *layer, GContext *ctx) {
@@ -222,6 +232,18 @@ static void hands_update(Animation *anim, AnimationProgress dist_normalized) {
     layer_mark_dirty(s_canvas_layer);
 }
 
+/*********************************** Config **************************************/
+
+static void inbox_received_handler(DictionaryIterator *iter, void *context) {
+	Tuple *show_hour_markers = dict_find(iter, KEY_SHOW_HOUR_MARKERS);
+	
+	if(show_hour_markers && show_hour_markers->value->int32 > 0) {
+		s_show_hour_markers = true;
+	}
+	
+	persist_write_bool(KEY_HIGH_CONTRAST, s_show_hour_markers);
+}
+
 static void init() {
     srand(time(NULL));
 
@@ -248,6 +270,8 @@ static void init() {
         .update = hands_update
     };
     animate(2 * ANIMATION_DURATION, ANIMATION_DELAY, &hands_impl, true);
+	
+	app_message_register_inbox_received(inbox_received_handler);
 }
 
 static void deinit() {
