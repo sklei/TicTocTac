@@ -1,0 +1,36 @@
+{
+    "appKeys": {
+        "dummy": 0
+    },
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Steven van Klei",
+    "longName": "TicTocTac",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/TicTocTac_Screenshot.png",
+                "name": "screenshot",
+                "type": "png"
+            },
+            {
+                "file": "images/TicTocTac_28x28.png",
+                "menuIcon": true,
+                "name": "TicTacTox_28x28",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "TicTocTac",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "f4a0324d-d8ab-4e6f-97e7-fbe906658814",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
