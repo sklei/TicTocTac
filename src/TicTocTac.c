@@ -6,16 +6,18 @@
 #define HAND_MARGIN  12
 #define FINAL_RADIUS 70
 #define STROKE_WIDTH 8
+#define STROKE_WIDTH_SLIM 2
   
 #define ANIMATION_DURATION 500
 #define ANIMATION_DELAY    600
 
 typedef struct {
-int hours;
-  int minutes;
+    int hours;
+    int minutes;
 } Time;
 
 static Window *s_main_window;
+static GRect window_bounds;
 static Layer *s_canvas_layer, *s_date_layer;
 static TextLayer *s_num_label;
 
@@ -111,14 +113,14 @@ static void update_proc(Layer *layer, GContext *ctx) {
 
     // Plot hands
     GPoint minute_hand = (GPoint) {
-        .x = (int16_t)(sin_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.x,
+        .x = (int16_t)( sin_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.x,
         .y = (int16_t)(-cos_lookup(TRIG_MAX_ANGLE * mode_time.minutes / 60) * (int32_t)(s_radius - HAND_MARGIN) / TRIG_MAX_RATIO) + s_center.y,
     };
     GPoint hour_hand = (GPoint) {
-        .x = (int16_t)(sin_lookup(hour_angle) * (int32_t)(s_radius - ((2 * HAND_MARGIN) + 6)) / TRIG_MAX_RATIO) + s_center.x,
+        .x = (int16_t)( sin_lookup(hour_angle) * (int32_t)(s_radius - ((2 * HAND_MARGIN) + 6)) / TRIG_MAX_RATIO) + s_center.x,
         .y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)(s_radius - ((2 * HAND_MARGIN) + 6)) / TRIG_MAX_RATIO) + s_center.y,
     };
-
+    
     // Draw hands with positive length only
     if(s_radius > HAND_MARGIN) {
         graphics_draw_line(ctx, s_center, minute_hand);
@@ -127,9 +129,34 @@ static void update_proc(Layer *layer, GContext *ctx) {
     //Top hour marker
     graphics_draw_line(ctx, s_center_top, s_center_top);
     
+    //Hour hand
     graphics_context_set_stroke_color(ctx, GColorRed);
     if(s_radius > 2 * HAND_MARGIN) {
         graphics_draw_line(ctx, s_center, hour_hand);
+    }
+    
+    //Hour markers    
+    graphics_context_set_stroke_color(ctx, GColorWhite);
+    graphics_context_set_stroke_width(ctx, STROKE_WIDTH_SLIM);
+    
+    for(int h=0; h<12; h++) {
+        if(h != 0 && h != 6) {
+            float hour_marker_angle = TRIG_MAX_ANGLE * h / 12;
+            
+            //APP_LOG(APP_LOG_LEVEL_DEBUG, "Width: %d", (window_bounds.size.w / 2) + 40);
+            
+            GPoint start_hour_marker = (GPoint) {
+                .x = (int16_t)( sin_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 2) / TRIG_MAX_RATIO) + s_center.x,
+                .y = (int16_t)(-cos_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 2) / TRIG_MAX_RATIO) + s_center.y,
+            }; 
+            
+            GPoint end_hour_marker = (GPoint) {
+                .x = (int16_t)( sin_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 7) / TRIG_MAX_RATIO) + s_center.x,
+                .y = (int16_t)(-cos_lookup(hour_marker_angle) * (int32_t)(s_radius - (window_bounds.size.w) + 7) / TRIG_MAX_RATIO) + s_center.y,
+            }; 
+            
+            graphics_draw_line(ctx, start_hour_marker, end_hour_marker);
+        }
     }
 }
 
@@ -143,7 +170,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 
 static void window_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
-    GRect window_bounds = layer_get_bounds(window_layer);
+    window_bounds = layer_get_bounds(window_layer);
 
     s_center = grect_center_point(&window_bounds);
     s_center_top = (GPoint) {

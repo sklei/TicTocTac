@@ -11,14 +11,14 @@
     "resources": {
         "media": [
             {
-                "file": "images/TicTocTac_Screenshot.png",
-                "name": "screenshot",
-                "type": "png"
-            },
-            {
                 "file": "images/TicTocTac_28x28.png",
                 "menuIcon": true,
                 "name": "TicTacTox_28x28",
+                "type": "png"
+            },
+            {
+                "file": "images/TicTocTac_Screenshot.png",
+                "name": "screenshot",
                 "type": "png"
             }
         ]
